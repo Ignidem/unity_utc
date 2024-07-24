@@ -1,30 +1,15 @@
 using System;
 using System.Collections.Generic;
-
 using Mirror;
-
-using UnityEngine;
 using Unity.Services.Relay.Models;
+using System.Threading.Tasks;
+using UnityEngine;
 
 namespace Utp
 {
 	public class RelayNetworkManager : NetworkManager
 	{
-		private UtpTransport utpTransport => transport as UtpTransport;
-
-		/// <summary>
-		/// Server's join code if using Relay.
-		/// </summary>
-		public string relayJoinCode = "";
-
-		/// <summary>
-		/// Get the port the server is listening on.
-		/// </summary>
-		/// <returns>The port.</returns>
-		public ushort GetPort()
-		{
-			return utpTransport.Port;
-		}
+		protected UtpTransport UtpTransport => transport as UtpTransport;
 
 		/// <summary>
 		/// Get whether Relay is enabled or not.
@@ -32,7 +17,7 @@ namespace Utp
 		/// <returns>True if enabled, false otherwise.</returns>
 		public bool IsRelayEnabled()
 		{
-			return utpTransport.useRelay;
+			return UtpTransport.useRelay;
 		}
 
 		/// <summary>
@@ -40,7 +25,7 @@ namespace Utp
 		/// </summary>
 		public void StartStandardServer()
 		{
-			utpTransport.useRelay = false;
+			UtpTransport.useRelay = false;
 			StartServer();
 		}
 
@@ -49,7 +34,7 @@ namespace Utp
 		/// </summary>
 		public void StartStandardHost()
 		{
-			utpTransport.useRelay = false;
+			UtpTransport.useRelay = false;
 			StartHost();
 		}
 
@@ -59,25 +44,20 @@ namespace Utp
 		/// 
 		public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure)
 		{
-			utpTransport.GetRelayRegions(onSuccess, onFailure);
+			UtpTransport.GetRelayRegions(onSuccess, onFailure);
 		}
 
 		/// <summary>
 		/// Ensures Relay is enabled. Starts a network "host" - a server and client in the same application
 		/// </summary>
-		public void StartRelayHost(int maxPlayers, string regionId = null)
+		public virtual async Task<string> StartRelayHost(int maxPlayers, string regionId = null)
 		{
-			utpTransport.useRelay = true;
-			utpTransport.AllocateRelayServer(maxPlayers, regionId,
-			(string joinCode) =>
-			{
-				relayJoinCode = joinCode;
-				StartHost();
-			},
-			() =>
-			{
-				UtpLog.Error($"Failed to start a Relay host.");
-			});
+			
+			UtpTransport utp = UtpTransport;
+			utp.useRelay = true;
+			string code = await utp.AllocateRelayServer(maxPlayers, regionId);
+			StartHost();
+			return code;
 		}
 
 		/// <summary>
@@ -85,25 +65,25 @@ namespace Utp
 		/// </summary>
 		public void JoinStandardServer()
 		{
-			utpTransport.useRelay = false;
+			UtpTransport.useRelay = false;
 			StartClient();
 		}
 
 		/// <summary>
 		/// Ensures Relay is enabled. Starts the client, connects to the server with the relayJoinCode.
 		/// </summary>
-		public void JoinRelayServer()
+		public async void JoinRelayServer(string code)
 		{
-			utpTransport.useRelay = true;
-			utpTransport.ConfigureClientWithJoinCode(relayJoinCode,
-			() =>
-			{
+			try 
+			{ 
+				UtpTransport utp = UtpTransport;
+				await utp.ConfigureClientWithJoinCode(code);
 				StartClient();
-			},
-			() =>
+			}
+			catch (Exception e)
 			{
-				UtpLog.Error($"Failed to join Relay server.");
-			});
+				UtpLog.Error(e.Message);
+			}
 		}
 	}
 }

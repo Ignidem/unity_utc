@@ -34,7 +34,7 @@ namespace Utp
 		/// <summary>
 		/// Server's join code if using Relay.
 		/// </summary>
-		public string RelayJoinCode { get; private set; }
+		public string JoinCode { get; private set; }
 
 		/// <summary>
 		/// Retrieve the <seealso cref="Unity.Services.Relay.Models.JoinAllocation"/> corresponding to the specified join code.
@@ -46,7 +46,7 @@ namespace Utp
 		{
 			try
 			{
-				await JoinFromCode(joinCode);
+				await GetAllocationFromJoinCode(joinCode);
 				onSuccess();
 			}
 			catch (Exception e)
@@ -56,9 +56,9 @@ namespace Utp
 			}
 		}
 
-		public async Task JoinFromCode(string joinCode)
+		public async Task GetAllocationFromJoinCode(string joinCode)
 		{
-			JoinAllocation = await RelayServiceSDK.JoinAllocationAsync(joinCode);
+			JoinAllocation = await RelayServiceSDK.JoinAllocationAsync(JoinCode = joinCode);
 		}
 
 		/// <summary>
@@ -96,32 +96,10 @@ namespace Utp
 			onSuccess?.Invoke(listRegions.Result);
 		}
 
-		/// <summary>
-		/// Allocate a Relay Server.
-		/// </summary>
-		/// <param name="maxPlayers">The max number of players that may connect to this server.</param>
-		/// <param name="regionId">The region to allocate the server in. May be null.</param>
-		/// <param name="onSuccess">A callback to invoke when the Relay server is successfully allocated.</param>
-		/// <param name="onFailure">A callback to invoke when the Relay server is unsuccessfully allocated.</param>
-		public async void AllocateRelayServer(int maxPlayers, string regionId, Action<string> onSuccess, Action onFailure)
-		{
-			try
-			{
-				string code = await AllocateRelayServer(maxPlayers, regionId);
-				GUIUtility.systemCopyBuffer = RelayJoinCode = code;
-				onSuccess(code);
-			}
-			catch (Exception e)
-			{
-				UtpLog.Error($"Unable to allocate Relay server, encountered an error creating a Relay allocation: {e.Message}.");
-				onFailure();
-			}
-		}
-
-		private async Task<string> AllocateRelayServer(int maxPlayers, string regionId)
+		public async Task<string> AllocateRelayServer(int maxPlayers, string regionId)
 		{
 			ServerAllocation = await RelayServiceSDK.CreateAllocationAsync(maxPlayers, regionId);
-			return await GetJoinCodeTask();
+			return JoinCode = await GetJoinCodeTask();
 		}
 
 		private Task<string> GetJoinCodeTask()

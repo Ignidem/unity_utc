@@ -4,6 +4,7 @@ using Mirror;
 using UnityEngine;
 using Unity.Networking.Transport;
 using Unity.Services.Relay.Models;
+using System.Threading.Tasks;
 
 namespace Utp
 {
@@ -58,7 +59,7 @@ namespace Utp
 		/// <summary>
 		/// The Relay manager.
 		/// </summary>
-		private IRelayManager relayManager;
+		public IRelayManager RelayManager { get; private set; }
 
 		/// <summary>
 		/// Calls when script is being loaded.
@@ -87,12 +88,9 @@ namespace Utp
 				() => OnClientDisconnected.Invoke(),
 				TimeoutMS);
 
-			if (!TryGetComponent<IRelayManager>(out relayManager))
-			{
-				//Add relay manager component
-				relayManager = gameObject.AddComponent<RelayManager>();
-			}
-
+			RelayManager = TryGetComponent<IRelayManager>(out var _relayManager) 
+				? _relayManager : gameObject.AddComponent<RelayManager>();
+			
 			UtpLog.Info("UTPTransport initialized!");
 		}
 
@@ -143,7 +141,7 @@ namespace Utp
 			if (useRelay)
 			{
 				// The data we need to connect is embedded in the relayManager's JoinAllocation
-				client.RelayConnect(relayManager.JoinAllocation);
+				client.RelayConnect(RelayManager.JoinAllocation);
 			}
 			else
 			{
@@ -169,9 +167,10 @@ namespace Utp
 		/// <param name="joinCode">The Relay join code.</param>
 		/// <param name="onSuccess">A callback to invoke when the Relay allocation is successfully retrieved from the join code.</param>
 		/// <param name="onFailure">A callback to invoke when the Relay allocation is unsuccessfully retrieved from the join code.</param>
-		public void ConfigureClientWithJoinCode(string joinCode, Action onSuccess, Action onFailure)
+		public Task ConfigureClientWithJoinCode(string joinCode)
 		{
-			relayManager.GetAllocationFromJoinCode(joinCode, onSuccess, onFailure);
+			useRelay = true;
+			return RelayManager.GetAllocationFromJoinCode(joinCode);
 		}
 
 		/// <summary>
@@ -181,7 +180,7 @@ namespace Utp
 		/// <param name="onFailure">A callback to invoke when the list of regions is unsuccessfully retrieved.</param>
 		public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure)
 		{
-			relayManager.GetRelayRegions(onSuccess, onFailure);
+			RelayManager.GetRelayRegions(onSuccess, onFailure);
 		}
 
 		/// <summary>
@@ -191,9 +190,9 @@ namespace Utp
 		/// <param name="regionId">The region ID.</param>
 		/// <param name="onSuccess">A callback to invoke when the Relay server is successfully allocated.</param>
 		/// <param name="onFailure">A callback to invoke when the Relay server is unsuccessfully allocated.</param>
-		public void AllocateRelayServer(int maxPlayers, string regionId, Action<string> onSuccess, Action onFailure)
+		public Task<string> AllocateRelayServer(int maxPlayers, string regionId)
 		{
-			relayManager.AllocateRelayServer(maxPlayers, regionId, onSuccess, onFailure);
+			return RelayManager.AllocateRelayServer(maxPlayers, regionId);
 		}
 
 		/// <summary>
@@ -239,7 +238,7 @@ namespace Utp
 		public override bool ServerActive() => server.IsActive();
 		public override void ServerStart()
 		{
-			server.Start(Port, useRelay, relayManager.ServerAllocation);
+			server.Start(Port, useRelay, RelayManager.ServerAllocation);
 		}
 
 		public override void ServerStop() => server.Stop();
