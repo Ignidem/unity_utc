@@ -32,7 +32,7 @@ namespace Utp
 		/// </summary>
 		/// <param name="onSuccess">A callback to invoke when the list of regions is successfully retrieved.</param>
 		/// <param name="onFailure">A callback to invoke when the list of regions is unsuccessfully retrieved.</param>
-		public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure);
+		public Task<List<Region>> GetRelayRegions();
 
 		/// <summary>
 		/// Allocate a Relay Server.

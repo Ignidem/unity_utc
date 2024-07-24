@@ -61,39 +61,9 @@ namespace Utp
 			JoinAllocation = await RelayServiceSDK.JoinAllocationAsync(JoinCode = joinCode);
 		}
 
-		/// <summary>
-		/// Get a list of Regions from the Relay Service.
-		/// </summary>
-		/// <param name="onSuccess">A callback to invoke when the list of regions is successfully retrieved.</param>
-		/// <param name="onFailure">A callback to invoke when the list of regions is unsuccessfully retrieved.</param>
-		public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure)
+		public Task<List<Region>> GetRelayRegions()
 		{
-			StartCoroutine(GetRelayRegionsTask(onSuccess, onFailure));
-		}
-
-		private IEnumerator GetRelayRegionsTask(Action<List<Region>> onSuccess, Action onFailure)
-		{
-			Task<List<Region>> listRegions = RelayServiceSDK.ListRegionsAsync();
-
-			while (!listRegions.IsCompleted)
-			{
-				yield return null;
-			}
-
-			if (listRegions.IsFaulted)
-			{
-				listRegions.Exception.Flatten().Handle((Exception err) =>
-				{
-					UtpLog.Error($"Unable to retrieve the list of Relay regions, encountered an error: {err.Message}.");
-					return true;
-				});
-
-				onFailure?.Invoke();
-
-				yield break;
-			}
-
-			onSuccess?.Invoke(listRegions.Result);
+			return RelayServiceSDK.ListRegionsAsync();
 		}
 
 		public async Task<string> AllocateRelayServer(int maxPlayers, string regionId)

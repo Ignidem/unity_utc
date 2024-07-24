@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Mirror;
 using Unity.Services.Relay.Models;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace Utp
 {
@@ -42,9 +41,18 @@ namespace Utp
 		/// Gets available Relay regions.
 		/// </summary>
 		/// 
-		public void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure)
+		public async void GetRelayRegions(Action<List<Region>> onSuccess, Action onFailure)
 		{
-			UtpTransport.GetRelayRegions(onSuccess, onFailure);
+			try
+			{
+				var regions = await UtpTransport.GetRelayRegions();
+				onSuccess(regions);
+			}
+			catch (Exception e)
+			{
+				UtpLog.Error(e.Message);
+				onFailure();
+			}
 		}
 
 		/// <summary>
@@ -52,7 +60,6 @@ namespace Utp
 		/// </summary>
 		public virtual async Task<string> StartRelayHost(int maxPlayers, string regionId = null)
 		{
-			
 			UtpTransport utp = UtpTransport;
 			utp.useRelay = true;
 			string code = await utp.AllocateRelayServer(maxPlayers, regionId);
