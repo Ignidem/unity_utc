@@ -66,8 +66,6 @@ namespace Utp
 		/// </summary>
 		private void Awake()
 		{
-			SetupDefaultCallbacks();
-
 			//Logging delegates
 			if (LoggerLevel < LogLevel.Verbose) UtpLog.Verbose = _ => { };
 			if (LoggerLevel < LogLevel.Info) UtpLog.Info = _ => { };
@@ -82,9 +80,10 @@ namespace Utp
 				TimeoutMS);
 
 			//Instantiate new UTP client
+			
 			client = new UtpClient(
-				() => OnClientConnected.Invoke(),
-				(message) => OnClientDataReceived.Invoke(message, Channels.Reliable),
+				() => OnClientConnected.Invoke(), 
+				ClientDataReceivedEvent,
 				() => OnClientDisconnected.Invoke(),
 				TimeoutMS);
 
@@ -92,32 +91,27 @@ namespace Utp
 				? _relayManager : gameObject.AddComponent<RelayManager>();
 		}
 
-		private void SetupDefaultCallbacks()
+		void ClientDataReceivedEvent(ArraySegment<byte> message)
 		{
-			if (OnServerConnected == null)
-			{
-				OnServerConnected = (connId) => UtpLog.Warning("OnServerConnected called with no handler");
-			}
-			if (OnServerDisconnected == null)
-			{
-				OnServerDisconnected = (connId) => UtpLog.Warning("OnServerDisconnected called with no handler");
-			}
-			if (OnServerDataReceived == null)
-			{
-				OnServerDataReceived = (connId, data, channel) => UtpLog.Warning("OnServerDataReceived called with no handler " + data);
-			}
-			if (OnClientConnected == null)
-			{
-				OnClientConnected = () => UtpLog.Warning("OnClientConnected called with no handler");
-			}
-			if (OnClientDisconnected == null)
-			{
-				OnClientDisconnected = () => UtpLog.Warning("OnClientDisconnected called with no handler");
-			}
-			if (OnClientDataReceived == null)
-			{
-				OnClientDataReceived = (data, channel) => UtpLog.Warning("OnClientDataReceived called with no handler " + data);
-			}
+			if (OnClientDataReceived != null)
+				OnClientDataReceived.Invoke(message, Channels.Reliable);
+			else DefaultEvent(nameof(OnClientDataReceived));
+		}
+		private void DefaultEvent(string evntName)
+		{
+			UtpLog.Warning(evntName + " called with no handler");
+		}
+
+		private async void SetupDefaultCallbacks()
+		{
+			await Task.Delay(500);
+			OnServerConnected ??= (connId) => DefaultEvent(nameof(OnServerConnected));
+			OnServerDisconnected ??= (connId) => DefaultEvent(nameof(OnServerDisconnected));
+			OnServerDataReceived ??= (connId, data, channel) => DefaultEvent(nameof(OnServerDataReceived));
+			OnClientConnected ??= () => DefaultEvent(nameof(OnClientConnected));
+			OnClientDisconnected ??= () => DefaultEvent(nameof(OnClientDisconnected));
+			OnClientDisconnected ??= () => DefaultEvent(nameof(OnClientDisconnected));
+			OnClientDataReceived ??= (msg, channel) => DefaultEvent(nameof(OnClientDataReceived));
 		}
 
 		/// <summary>
