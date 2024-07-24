@@ -40,11 +40,12 @@ namespace Utp
         /// </summary>
         protected int timeoutInMilliseconds;
 
-		public int PayloadCapacity => 10000;
+		public int PayloadCapacity = 12*1024;
 
 		protected void CreateDriver(NetworkSettings settings)
 		{
 			settings.WithFragmentationStageParameters(PayloadCapacity);
+			settings.WithReliableStageParameters();
 			Driver = NetworkDriver.Create(settings);
 			reliablePipeline = Driver.CreatePipeline(typeof(FragmentationPipelineStage), typeof(ReliableSequencedPipelineStage));
 			unreliablePipeline = Driver.CreatePipeline(typeof(UnreliableSequencedPipelineStage));
