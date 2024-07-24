@@ -294,7 +294,7 @@ namespace Utp
 			settings.WithNetworkConfigParameters(disconnectTimeoutMS: timeoutInMilliseconds);
 
 			//Create IPV4 endpoint
-			NetworkEndPoint endpoint = NetworkEndPoint.AnyIpv4;
+			NetworkEndpoint endpoint = NetworkEndpoint.AnyIpv4;
 			endpoint.Port = port;
 
 			//Initialize connections list & event queue
@@ -478,7 +478,7 @@ namespace Utp
 			//If a connection was found, get its address
 			if (TryGetConnection(connectionId, out Unity.Networking.Transport.NetworkConnection connection))
 			{
-				NetworkEndPoint endpoint = Driver.RemoteEndPoint(connection);
+				NetworkEndpoint endpoint = Driver.GetRemoteEndpoint(connection);
 				return endpoint.Address;
 			}
 			else

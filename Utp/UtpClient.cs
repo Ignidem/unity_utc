@@ -257,8 +257,8 @@ namespace Utp
 			}
 
 			// TODO: Support for IPv6.
-			NetworkEndPoint endpoint;
-			if (!NetworkEndPoint.TryParse(address, port, out endpoint))
+			NetworkEndpoint endpoint;
+			if (!NetworkEndpoint.TryParse(address, port, out endpoint))
 			{
 				UtpLog.Error($"Abandoning connection attempt, failed to convert {address}:{port} into a valid NetworkEndpoint.");
 				return;

@@ -90,8 +90,6 @@ namespace Utp
 
 			RelayManager = TryGetComponent<IRelayManager>(out var _relayManager) 
 				? _relayManager : gameObject.AddComponent<RelayManager>();
-			
-			UtpLog.Info("UTPTransport initialized!");
 		}
 
 		private void SetupDefaultCallbacks()
@@ -204,11 +202,11 @@ namespace Utp
 			//Check for client activity
 			if (client != null && client.IsConnected())
 			{
-				return NetworkParameterConstants.MTU - client.GetMaxHeaderSize(channelId);
+				return client.PayloadCapacity - client.GetMaxHeaderSize(channelId);
 			}
 			else if (server != null && server.IsActive())
 			{
-				return NetworkParameterConstants.MTU - server.GetMaxHeaderSize(channelId);
+				return server.PayloadCapacity - server.GetMaxHeaderSize(channelId);
 			}
 			else
 			{
