@@ -20,7 +20,7 @@ namespace Utp
 
         public Task<JoinAllocation> JoinAllocationAsync(string joinCode)
         {
-            return Relay.Instance.JoinAllocationAsync(joinCode);
+			return Relay.Instance.JoinAllocationAsync(joinCode);
         }
 
         public Task<List<Region>> ListRegionsAsync()
